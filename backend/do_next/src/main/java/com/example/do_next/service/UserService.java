@@ -1,6 +1,8 @@
 package com.example.do_next.service;
 
 import com.example.do_next.entity.User;
+import com.example.do_next.exception.BusinessException;
+import com.example.do_next.exception.NotFoundException;
 import com.example.do_next.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -53,7 +55,7 @@ public class UserService {
         // 业务验证：检查用户名是否已存在
         // findByUserName返回Optional，避免空指针异常
         if (userRepository.findByUserName(userName).isPresent()) {
-            throw new RuntimeException("用户名已存在");
+            throw new BusinessException("用户名已存在");
         }
         
         // 创建新用户对象
@@ -115,7 +117,7 @@ public class UserService {
         // JPA查询 + 异常处理：查找用户，不存在则抛出异常
         // orElseThrow是Optional的方法，当值不存在时执行lambda表达式
         return userRepository.findByUserName(userName)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> NotFoundException.userNotFound(userName));
     }
     
     /**
@@ -130,7 +132,7 @@ public class UserService {
     public User findById(Long id) {
         // JPA操作：根据主键查找，这是最高效的查询方式
         return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> NotFoundException.userNotFound(id));
     }
     
     /**

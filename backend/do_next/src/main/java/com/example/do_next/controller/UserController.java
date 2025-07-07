@@ -2,6 +2,8 @@ package com.example.do_next.controller;
 
 import com.example.do_next.entity.User;
 import com.example.do_next.service.UserService;
+import com.example.do_next.exception.ValidationException;
+import com.example.do_next.exception.BusinessException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,101 +36,71 @@ public class UserController {
     /**
      * 用户注册
      * POST /api/users/register
-     * 
-     * @param registerRequest 包含用户名和密码的请求体
-     * @return 注册结果
      */
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody Map<String, String> registerRequest) {
-        try {
-            // 从请求体中提取参数
-            String username = registerRequest.get("username");
-            String password = registerRequest.get("password");
-            
-            // 基础参数验证
-            if (username == null || username.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("用户名不能为空");
-            }
-            if (password == null || password.length() < 6) {
-                return ResponseEntity.badRequest().body("密码长度不能少于6位");
-            }
-            
-            // 调用Service层进行业务处理
-            User newUser = userService.registerUser(username.trim(), password);
-            
-            // 构造成功响应（不返回密码等敏感信息）
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "注册成功");
-            response.put("userId", newUser.getUserId());
-            response.put("username", newUser.getUserName());
-            response.put("userRole", newUser.getUserRole());
-            
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-            
-        } catch (RuntimeException e) {
-            // 处理业务异常（如用户名已存在）
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(errorResponse);
+    public ResponseEntity<Map<String, Object>> registerUser(@RequestBody Map<String, String> registerRequest) {
+        // 从请求体中提取参数
+        String username = registerRequest.get("username");
+        String password = registerRequest.get("password");
+        
+        // 基础参数验证
+        if (username == null || username.trim().isEmpty()) {
+            throw ValidationException.requiredField("用户名");
         }
+        if (password == null || password.length() < 6) {
+            throw ValidationException.invalidLength("密码", 6, 50);
+        }
+        
+        // 调用Service层进行业务处理
+        User newUser = userService.registerUser(username.trim(), password);
+        
+        // 构造成功响应
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "注册成功");
+        response.put("userId", newUser.getUserId());
+        response.put("username", newUser.getUserName());
+        response.put("userRole", newUser.getUserRole());
+        
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
     
     /**
      * 用户登录
      * POST /api/users/login
-     * 
-     * @param loginRequest 包含用户名和密码的请求体
-     * @return 登录结果
      */
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody Map<String, String> loginRequest) {
-        try {
-            // 从请求体中提取参数
-            String username = loginRequest.get("username");
-            String password = loginRequest.get("password");
-            
-            // 基础参数验证
-            if (username == null || username.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("用户名不能为空");
-            }
-            if (password == null || password.isEmpty()) {
-                return ResponseEntity.badRequest().body("密码不能为空");
-            }
-            
-            // 调用Service层进行认证
-            boolean isAuthenticated = userService.authenticateUser(username.trim(), password);
-            
-            if (isAuthenticated) {
-                // 认证成功，获取用户信息
-                User user = userService.findByUserName(username.trim());
-                
-                // 构造成功响应
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", true);
-                response.put("message", "登录成功");
-                response.put("userId", user.getUserId());
-                response.put("username", user.getUserName());
-                response.put("userRole", user.getUserRole());
-                response.put("email", user.getEmail());
-                
-                return ResponseEntity.ok(response);
-            } else {
-                // 认证失败
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "用户名或密码错误");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
-            }
-            
-        } catch (RuntimeException e) {
-            // 处理其他异常
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "登录失败: " + e.getMessage());
-            return ResponseEntity.badRequest().body(errorResponse);
+    public ResponseEntity<Map<String, Object>> loginUser(@RequestBody Map<String, String> loginRequest) {
+        String username = loginRequest.get("username");
+        String password = loginRequest.get("password");
+        
+        // 基础参数验证
+        if (username == null || username.trim().isEmpty()) {
+            throw ValidationException.requiredField("用户名");
         }
+        if (password == null || password.isEmpty()) {
+            throw ValidationException.requiredField("密码");
+        }
+        
+        // 调用Service层进行认证
+        boolean isAuthenticated = userService.authenticateUser(username.trim(), password);
+        
+        if (!isAuthenticated) {
+            throw new BusinessException(401, "用户名或密码错误");
+        }
+        
+        // 认证成功，获取用户信息
+        User user = userService.findByUserName(username.trim());
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "登录成功");
+        response.put("userId", user.getUserId());
+        response.put("username", user.getUserName());
+        response.put("userRole", user.getUserRole());
+        response.put("email", user.getEmail());
+        
+        return ResponseEntity.ok(response);
     }
     
     /**

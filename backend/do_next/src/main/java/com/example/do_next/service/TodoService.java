@@ -3,6 +3,8 @@ package com.example.do_next.service;
 import com.example.do_next.entity.Todo;
 import com.example.do_next.entity.User;
 import com.example.do_next.repository.TodoRepository;
+import com.example.do_next.exception.NotFoundException;
+import com.example.do_next.exception.AccessDeniedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -105,13 +107,6 @@ public class TodoService {
     
     /**
      * 根据ID获取单个待办项（包含所有权检查）
-     * 
-     * 核心安全方法：确保用户只能访问自己的数据
-     * 
-     * @param id 待办项ID
-     * @param currentUser 当前用户
-     * @return 待办项对象
-     * @throws RuntimeException 如果待办项不存在或无访问权限
      */
     public Todo getTodoById(Long id, User currentUser) {
         // JPA操作：根据主键查找，返回Optional防止空指针
@@ -119,13 +114,12 @@ public class TodoService {
         
         // 业务验证：检查待办项是否存在
         if (todo.isEmpty()) {
-            throw new RuntimeException("待办项不存在");
+            throw NotFoundException.todoNotFound(id);
         }
         
         // 安全检查：验证数据所有权，防止用户访问他人的数据
-        // 比较待办项所属用户的ID与当前用户的ID
         if (!todo.get().getUser().getUserId().equals(currentUser.getUserId())) {
-            throw new RuntimeException("无权访问此待办项");
+            throw AccessDeniedException.ownershipViolation("待办项");
         }
         
         return todo.get();
