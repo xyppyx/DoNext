@@ -185,12 +185,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatchException(
             MethodArgumentTypeMismatchException e, HttpServletRequest request) {
         
+        Class<?> requiredType = e.getRequiredType();
+        String typeName = requiredType != null ? requiredType.getSimpleName() : "未知类型";
         log.warn("参数类型转换异常: 参数 {} 的值 {} 无法转换为 {} - 请求路径: {}", 
                 e.getName(), e.getValue(), 
-                e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "未知类型", 
+                typeName, 
                 request.getRequestURI());
         
-        String typeName = e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "未知类型";
         String message = String.format("参数 '%s' 的值 '%s' 格式不正确，期望类型为 %s", 
                 e.getName(), e.getValue(), typeName);
         

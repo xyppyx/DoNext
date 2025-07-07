@@ -4,6 +4,12 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+# 配置文件 - 包含敏感信息，不应提交到版本控制
+**/src/main/resources/application.properties
+**/src/main/resources/application-*.properties
+/src/main/resources/application.yml
+**/src/main/resources/application-*.yml
+
 ### STS ###
 .apt_generated
 .classpath
