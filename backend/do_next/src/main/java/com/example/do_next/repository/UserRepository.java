@@ -15,16 +15,16 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     
     //根据用户名查找用户
-    Optional<User> findByUsername(String username);
+    Optional<User> findByUserName(String userName);
     
     //根据邮箱查找用户
     Optional<User> findByEmail(String email);
     
     //根据用户名或邮箱查找用户（用于登录）
-    Optional<User> findByUsernameOrEmail(String username, String email);
+    Optional<User> findByUserNameOrEmail(String userName, String email);
     
     //检查用户名是否存在
-    boolean existsByUsername(String username);
+    boolean existsByUserName(String userName);
     
     //检查邮箱是否存在
     boolean existsByEmail(String email);
@@ -47,7 +47,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     void updateLastLoginAt(@Param("userId") Long userId, @Param("loginTime") LocalDateTime loginTime);
     
     //根据用户名模糊查询
-    List<User> findByUsernameContainingIgnoreCase(String username);
+    List<User> findByuserNameContainingIgnoreCase(String userName);
     
     //统计特定角色的用户数量
     long countByUserRole(String userRole);

@@ -14,11 +14,13 @@ public class Todo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long todoId;
     
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
     
-    @Column(name = "parent_id")
-    private Long parentId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Todo parentTodo;
     
     @Column(name = "title", nullable = false, length = 255)
     private String title;
@@ -53,9 +55,9 @@ public class Todo {
         this.updatedAt = LocalDateTime.now();
     }
     
-    public Todo(Long userId, String title) {
+    public Todo(User user, String title) {
         this();
-        this.userId = userId;
+        this.user = user;
         this.title = title;
     }
     

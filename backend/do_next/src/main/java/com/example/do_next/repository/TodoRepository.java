@@ -1,6 +1,7 @@
 package com.example.do_next.repository;
 
 import com.example.do_next.entity.Todo;
+import com.example.do_next.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,42 +16,37 @@ import java.util.List;
 //<Todo, Long>表示该接口操作的实体类是 Todo，主键类型是 Long
 public interface TodoRepository extends JpaRepository<Todo, Long> {
     
-    //在 TodoRepository 中定义的大部分方法，Spring Data JPA 会根据方法名自动推断出要执行的查询
-    //根据用户ID查找所有待办事项
-    List<Todo> findByUserId(Long userId);
+    // 根据用户对象查找所有待办事项
+    List<Todo> findByUser(User user);
     
-    //根据用户ID和完成状态查找待办事项
-    List<Todo> findByUserIdAndCompleted(Long userId, Boolean completed);
+    // 根据用户对象和完成状态查找待办事项
+    List<Todo> findByUserAndCompleted(User user, Boolean completed);
     
-    //根据父待办项ID查找子待办事项
-    List<Todo> findByParentId(Long parentId);
+    // 根据父待办项对象查找子待办事项
+    List<Todo> findByParentTodo(Todo parentTodo);
     
-    //查找用户的主待办事项（无父项的待办事项）
-    List<Todo> findByUserIdAndParentIdIsNull(Long userId);
+    // 查找用户的主待办事项（无父项的待办事项）
+    List<Todo> findByUserAndParentTodoIsNull(User user);
     
-    //根据用户ID和优先级查找待办事项
-    List<Todo> findByUserIdAndPriority(Long userId, Integer priority);
+    // 根据用户对象和优先级查找待办事项
+    List<Todo> findByUserAndPriority(User user, Integer priority);
     
-    //根据用户ID和重要性查找待办事项
-    List<Todo> findByUserIdAndImportance(Long userId, Integer importance);
+    // 根据用户对象和重要性查找待办事项
+    List<Todo> findByUserAndImportance(User user, Integer importance);
     
-    //方法名无法清晰地表达所需的查询逻辑，或者需要执行更复杂、定制化的查询时，需要使用 @Query 注解来手动编写
-    //@Qurey支持原生sql与jpql
-    //jpql操作的是实体对象及其属性，而不是数据库表和列。这意味着在 JPQL 中使用实体类名和属性名，而不是真实的表名和列名
-    //查找过期的待办事项
-    @Query("SELECT t FROM Todo t WHERE t.userId = :userId AND t.dueDate < :now AND t.completed = false")
-    List<Todo> findOverdueTodos(@Param("userId") Long userId, @Param("now") LocalDateTime now);
+    // 查找过期的待办事项
+    @Query("SELECT t FROM Todo t WHERE t.user = :user AND t.dueDate < :now AND t.completed = false")
+    List<Todo> findOverdueTodos(@Param("user") User user, @Param("now") LocalDateTime now);
     
-    //根据标题模糊查询用户的待办事项
-    List<Todo> findByUserIdAndTitleContainingIgnoreCase(Long userId, String title);
+    // 根据标题模糊查询用户的待办事项
+    List<Todo> findByUserAndTitleContainingIgnoreCase(User user, String title);
     
-    //统计用户的待办事项数量
-    long countByUserIdAndCompleted(Long userId, Boolean completed);
+    // 统计用户的待办事项数量
+    long countByUserAndCompleted(User user, Boolean completed);
     
-    //@Param 注解用于指定查询参数的名称，以便在 @Query 中引用(前加冒号)
-    //根据用户ID和日期范围查找待办事项
-    @Query("SELECT t FROM Todo t WHERE t.userId = :userId AND t.dueDate BETWEEN :startDate AND :endDate")
-    List<Todo> findByUserIdAndDueDateBetween(@Param("userId") Long userId, 
-                                           @Param("startDate") LocalDateTime startDate, 
-                                           @Param("endDate") LocalDateTime endDate);
+    // 根据用户对象和日期范围查找待办事项
+    @Query("SELECT t FROM Todo t WHERE t.user = :user AND t.dueDate BETWEEN :startDate AND :endDate")
+    List<Todo> findByUserAndDueDateBetween(@Param("user") User user, 
+                                         @Param("startDate") LocalDateTime startDate, 
+                                         @Param("endDate") LocalDateTime endDate);
 }
