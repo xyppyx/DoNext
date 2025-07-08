@@ -2,14 +2,19 @@ package com.example.do_next.controller;
 
 import com.example.do_next.entity.Todo;
 import com.example.do_next.entity.User;
+import com.example.do_next.dto.TodoDto;
+import com.example.do_next.dto.UserDto;
 import com.example.do_next.service.TodoService;
 import com.example.do_next.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.example.do_next.exception.ValidationException;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * TodoController - 待办事项控制器
@@ -35,21 +40,28 @@ public class TodoController {
      * POST /api/todos
      */
     @PostMapping
-    public ResponseEntity<Todo> createTodo(@RequestBody Todo todo, @RequestParam Long userId) {
+    public ResponseEntity<TodoDto> createTodo(@RequestBody Todo todo, @RequestParam Long userId) {
+        // 参数验证
+        if (todo.getTitle() == null || todo.getTitle().trim().isEmpty()) {
+            throw ValidationException.requiredField("标题");
+        }
+        
         User currentUser = userService.findById(userId);
         Todo createdTodo = todoService.createTodo(todo, currentUser);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdTodo);
+        // 转换为DTO返回
+        TodoDto todoDto = todoService.convertToDto(createdTodo);
+        return ResponseEntity.status(HttpStatus.CREATED).body(todoDto);
     }
     
     /**
      * 获取用户所有待办项
      * GET /api/todos/user/{userId}
      */
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Todo>> getAllTodosByUser(@PathVariable Long userId) {
+    @GetMapping("/user/{userId}")    
+    public ResponseEntity<List<TodoDto>> getAllTodosByUser(@PathVariable Long userId) {
         User user = userService.findById(userId);
-        List<Todo> todos = todoService.getAllTodosByUser(user);
-        return ResponseEntity.ok(todos);
+        List<TodoDto> todoDtos = todoService.getAllTodosDtoByUser(user);
+        return ResponseEntity.ok(todoDtos);
     }
     
     /**
@@ -57,10 +69,22 @@ public class TodoController {
      * GET /api/todos/user/{userId}/main
      */
     @GetMapping("/user/{userId}/main")
-    public ResponseEntity<List<Todo>> getMainTodosByUser(@PathVariable Long userId) {
+    public ResponseEntity<List<TodoDto>> getMainTodosByUser(@PathVariable Long userId) {
         User user = userService.findById(userId);
-        List<Todo> mainTodos = todoService.getMainTodosByUser(user);
-        return ResponseEntity.ok(mainTodos);
+        List<TodoDto> mainTodoDtos = todoService.getMainTodosDtoByUser(user);
+        return ResponseEntity.ok(mainTodoDtos);
+    }
+    
+    /**
+     * 获取子待办项
+     * GET /api/todos/{parentId}/subtodos
+     */
+    @GetMapping("/{parentId}/subtodos")
+    public ResponseEntity<List<TodoDto>> getSubTodos(@PathVariable Long parentId, @RequestParam Long userId) {
+        User currentUser = userService.findById(userId);
+        Todo parentTodo = todoService.getTodoById(parentId, currentUser);
+        List<TodoDto> subTodoDtos = todoService.getSubTodosDtoByParent(parentTodo, currentUser);
+        return ResponseEntity.ok(subTodoDtos);
     }
     
     /**
@@ -68,10 +92,10 @@ public class TodoController {
      * GET /api/todos/{id}
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Todo> getTodoById(@PathVariable Long id, @RequestParam Long userId) {
+    public ResponseEntity<TodoDto> getTodoById(@PathVariable Long id, @RequestParam Long userId) {
         User currentUser = userService.findById(userId);
-        Todo todo = todoService.getTodoById(id, currentUser);
-        return ResponseEntity.ok(todo);
+        TodoDto todoDto = todoService.getTodoDtoById(id, currentUser);
+        return ResponseEntity.ok(todoDto);
     }
     
     /**
@@ -79,10 +103,12 @@ public class TodoController {
      * PUT /api/todos/{id}
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Todo> updateTodo(@PathVariable Long id, @RequestBody Todo updatedTodo, @RequestParam Long userId) {
+    public ResponseEntity<TodoDto> updateTodo(@PathVariable Long id, @RequestBody Todo updatedTodo, @RequestParam Long userId) {
         User currentUser = userService.findById(userId);
         Todo updated = todoService.updateTodo(id, updatedTodo, currentUser);
-        return ResponseEntity.ok(updated);
+        // 转换为DTO返回
+        TodoDto todoDto = todoService.convertToDto(updated);
+        return ResponseEntity.ok(todoDto);
     }
     
     /**
@@ -90,9 +116,13 @@ public class TodoController {
      * DELETE /api/todos/{id}
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteTodo(@PathVariable Long id, @RequestParam Long userId) {
+    public ResponseEntity<Map<String, Object>> deleteTodo(@PathVariable Long id, @RequestParam Long userId) {
         User currentUser = userService.findById(userId);
         todoService.deleteTodo(id, currentUser);
-        return ResponseEntity.ok("删除成功");
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "删除成功");
+        return ResponseEntity.ok(response);
     }
 }

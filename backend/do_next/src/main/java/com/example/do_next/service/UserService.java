@@ -1,5 +1,6 @@
 package com.example.do_next.service;
 
+import com.example.do_next.dto.UserDto;
 import com.example.do_next.entity.User;
 import com.example.do_next.exception.BusinessException;
 import com.example.do_next.exception.NotFoundException;
@@ -97,11 +98,18 @@ public class UserService {
         }
         
         User user = userOpt.get();
+        boolean isMatch = passwordEncoder.matches(rawPassword, user.getPassword());
+
+        if(isMatch) {
+            // 认证成功后，可以更新用户的最后登录时间
+            user.setLastLoginAt(java.time.LocalDateTime.now());
+            userRepository.save(user); // 保存更新后的用户信息
+        }
         
         // 安全验证：使用PasswordEncoder比较密码
         // matches方法会将明文密码与数据库中的加密密码进行比较
         // 内部会使用相同的盐值和算法进行验证
-        return passwordEncoder.matches(rawPassword, user.getPassword());
+        return isMatch;
     }
     
     /**
@@ -148,5 +156,44 @@ public class UserService {
     public boolean existsByUserName(String userName) {
         // 简洁的存在性检查：只关心是否存在，不需要获取完整对象
         return userRepository.findByUserName(userName).isPresent();
+    }
+    
+    /**
+     * 将User实体转换为UserDto
+     * 
+     * @param user 用户实体
+     * @return 用户DTO
+     */
+    public UserDto convertToDto(User user) {
+        UserDto dto = new UserDto();
+        dto.setUserId(user.getUserId());
+        dto.setUserName(user.getUserName());
+        dto.setEmail(user.getEmail());
+        dto.setUserRole(user.getUserRole());
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setLastLoginAt(user.getLastLoginAt());
+        return dto;
+    }
+    
+    /**
+     * 根据ID查找用户并返回DTO
+     * 
+     * @param id 用户ID
+     * @return 用户DTO
+     */
+    public UserDto findUserDtoById(Long id) {
+        User user = findById(id);
+        return convertToDto(user);
+    }
+    
+    /**
+     * 根据用户名查找用户并返回DTO
+     * 
+     * @param username 用户名
+     * @return 用户DTO
+     */
+    public UserDto findUserDtoByUsername(String username) {
+        User user = findByUserName(username);
+        return convertToDto(user);
     }
 }

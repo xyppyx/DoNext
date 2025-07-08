@@ -7,6 +7,9 @@ import com.example.do_next.exception.NotFoundException;
 import com.example.do_next.exception.AccessDeniedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.example.do_next.dto.TodoDto;
+import com.example.do_next.dto.UserDto;
+import java.util.stream.Collectors;
 
 import java.util.List;
 import java.util.Optional;
@@ -176,4 +179,88 @@ public class TodoService {
         // 这符合"删除进程会终止其所有线程"的设计理念
         todoRepository.delete(todo);
     }
+
+    /**
+     * 获取用户所有待办项（返回DTO）
+     */
+    public List<TodoDto> getAllTodosDtoByUser(User user) {
+        List<Todo> todos = todoRepository.findByUser(user);
+        return todos.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * 获取用户主待办项DTO
+     */
+    public List<TodoDto> getMainTodosDtoByUser(User user) {
+        List<Todo> mainTodos = todoRepository.findByUserAndParentTodoIsNull(user);
+        return mainTodos.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * 获取子待办项DTO
+     */
+    public List<TodoDto> getSubTodosDtoByParent(Todo parentTodo, User currentUser) {
+        // 验证权限
+        getTodoById(parentTodo.getTodoId(), currentUser);
+        
+        List<Todo> subTodos = todoRepository.findByParentTodo(parentTodo);
+        return subTodos.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * 根据ID获取待办项DTO
+     */
+    public TodoDto getTodoDtoById(Long id, User currentUser) {
+        Todo todo = getTodoById(id, currentUser);
+        return convertToDto(todo);
+    }
+    
+    /**
+     * 转换Todo实体为DTO
+     */
+    public TodoDto convertToDto(Todo todo) {
+        TodoDto dto = new TodoDto();
+        dto.setTodoId(todo.getTodoId());
+        dto.setTitle(todo.getTitle());
+        dto.setDescription(todo.getDescription());
+        dto.setCompleted(todo.getCompleted());
+        dto.setProgress(todo.getProgress());
+        dto.setPriority(todo.getPriority());
+        dto.setImportance(todo.getImportance());
+        dto.setDueDate(todo.getDueDate());
+        dto.setCreatedAt(todo.getCreatedAt());
+        dto.setUpdatedAt(todo.getUpdatedAt());
+        
+        // 转换用户信息（只包含安全信息）
+        if (todo.getUser() != null) {
+            UserDto userDto = new UserDto();
+            userDto.setUserId(todo.getUser().getUserId());
+            userDto.setUserName(todo.getUser().getUserName());
+            userDto.setEmail(todo.getUser().getEmail());
+            userDto.setUserRole(todo.getUser().getUserRole());
+            userDto.setCreatedAt(todo.getUser().getCreatedAt());
+            userDto.setLastLoginAt(todo.getUser().getLastLoginAt());
+            dto.setUser(userDto);
+        }
+        
+        // 转换父待办项信息（简化版，避免循环引用）
+        if (todo.getParentTodo() != null) {
+            TodoDto.ParentTodoDto parentDto = new TodoDto.ParentTodoDto();
+            parentDto.setTodoId(todo.getParentTodo().getTodoId());
+            parentDto.setTitle(todo.getParentTodo().getTitle());
+            parentDto.setCompleted(todo.getParentTodo().getCompleted());
+            parentDto.setProgress(todo.getParentTodo().getProgress());
+            dto.setParentTodo(parentDto);
+        }
+        
+        return dto;
+    }
+
+    
 }
