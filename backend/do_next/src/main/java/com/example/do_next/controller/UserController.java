@@ -23,7 +23,6 @@ import java.util.Map;
  */
 @RestController // 组合注解：@Controller + @ResponseBody，返回JSON格式数据
 @RequestMapping("/api/users") // 设置基础路径
-@CrossOrigin(origins = "*") // 允许跨域请求（开发阶段使用，生产环境需要配置具体域名）
 public class UserController {
     
     /**

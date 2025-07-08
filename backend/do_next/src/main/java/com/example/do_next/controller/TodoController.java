@@ -22,7 +22,6 @@ import java.util.List;
  */
 @RestController // 组合注解：@Controller + @ResponseBody，返回JSON格式数据
 @RequestMapping("/api/todos") // 设置基础路径
-@CrossOrigin(origins = "*") // 允许跨域请求（开发阶段使用）
 public class TodoController {
     
     @Autowired

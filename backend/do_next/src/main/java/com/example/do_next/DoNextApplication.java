@@ -79,15 +79,17 @@ public class DoNextApplication {
 	 * @return WebMvcConfigurer配置对象
 	 */
 	@Bean
-	public WebMvcConfigurer corsConfigurer() {
+	public WebMvcConfigurer webMvcConfigurer() {
 		return new WebMvcConfigurer() {
+			
+			@Override
 			public void addCorsMappings(@NonNull CorsRegistry registry) {
-				registry.addMapping("/api/**") // 对所有/api开头的接口生效
-						.allowedOriginPatterns("*") // 允许所有源（开发环境用）
-						.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // 允许的HTTP方法
-						.allowedHeaders("*") // 允许所有请求头
-						.allowCredentials(true) // 允许携带认证信息（如Cookie）
-						.maxAge(3600); // 预检请求的缓存时间（秒）
+				registry.addMapping("/api/**")
+						.allowedOriginPatterns("*") // 使用allowedOriginPatterns而不是allowedOrigins
+						.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+						.allowedHeaders("*")
+						.allowCredentials(true) // 这样就可以同时使用了
+						.maxAge(3600);
 			}
 		};
 	};
