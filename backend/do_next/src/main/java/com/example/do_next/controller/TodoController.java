@@ -3,7 +3,6 @@ package com.example.do_next.controller;
 import com.example.do_next.entity.Todo;
 import com.example.do_next.entity.User;
 import com.example.do_next.dto.TodoDto;
-import com.example.do_next.dto.UserDto;
 import com.example.do_next.service.TodoService;
 import com.example.do_next.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;

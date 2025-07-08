@@ -24,6 +24,7 @@ target/
 *.iws
 *.iml
 *.ipr
+DoNext\backend\.idea
 
 ### NetBeans ###
 /nbproject/private/
