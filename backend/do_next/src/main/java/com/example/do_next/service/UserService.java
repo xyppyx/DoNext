@@ -5,6 +5,9 @@ import com.example.do_next.entity.User;
 import com.example.do_next.exception.BusinessException;
 import com.example.do_next.exception.NotFoundException;
 import com.example.do_next.repository.UserRepository;
+
+import jakarta.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -52,6 +55,7 @@ public class UserService {
      * @return 注册成功的用户对象
      * @throws RuntimeException 如果用户名已存在
      */
+    @Transactional
     public User registerUser(String userName, String rawPassword) {
         // 业务验证：检查用户名是否已存在
         // findByUserName返回Optional，避免空指针异常
@@ -88,6 +92,7 @@ public class UserService {
      * @param rawPassword 明文密码
      * @return 认证结果：true表示成功，false表示失败
      */
+    @Transactional
     public boolean authenticateUser(String userName, String rawPassword) {
         // JPA查询：根据用户名查找用户
         Optional<User> userOpt = userRepository.findByUserName(userName);
