@@ -3,6 +3,9 @@ package com.example.do_next.service;
 import com.example.do_next.entity.Todo;
 import com.example.do_next.entity.User;
 import com.example.do_next.repository.TodoRepository;
+
+import jakarta.transaction.Transactional;
+
 import com.example.do_next.exception.NotFoundException;
 import com.example.do_next.exception.AccessDeniedException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +36,7 @@ public class TodoService {
      */
     @Autowired
     private TodoRepository todoRepository;
-    
+
     /**
      * 创建待办项
      * 
@@ -46,6 +49,7 @@ public class TodoService {
      * @param currentUser 当前登录的用户
      * @return 保存后的待办项对象（包含自动生成的ID）
      */
+    @Transactional
     public Todo createTodo(Todo todo, User currentUser) {
         // 业务规则：将待办项关联到当前用户，确保数据所有权
         todo.setUser(currentUser);
@@ -141,6 +145,7 @@ public class TodoService {
      * @param currentUser 当前用户
      * @return 更新后的待办项对象
      */
+    @Transactional
     public Todo updateTodo(Long id, Todo updatedTodo, User currentUser) {
         // 安全检查：获取待更新的Todo并验证所有权
         Todo existingTodo = getTodoById(id, currentUser);
@@ -170,6 +175,7 @@ public class TodoService {
      * @param id 待办项ID
      * @param currentUser 当前用户
      */
+    @Transactional
     public void deleteTodo(Long id, User currentUser) {
         // 安全检查：获取待删除的Todo并验证所有权
         Todo todo = getTodoById(id, currentUser);
